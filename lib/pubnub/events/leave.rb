@@ -27,28 +27,28 @@ module Pubnub
       $logger.debug('Pubnub'){"Pubnub::Leave#fire"}
       unless @left
         app.update_timetoken(0)
-        if app.env[:subscriptions][@origin].nil?
+        if app.env[:subscriptions].nil?
           $logger.error('Pubnub'){'There\'s no subscription for that origin'}
           raise ArgumentError.new(:object => self, :message => 'You cannot leave channel that is not subscribed')
         else
           @channel.each do |channel|
-            $logger.debug('Pubnub'){"#{app.env[:subscriptions][@origin].get_channels.to_s}.include? #{channel}"}
-            raise ArgumentError.new(:object => self, :message => 'You cannot leave channel that is not subscribed') unless app.env[:subscriptions][@origin].get_channels.include?(channel)
+            $logger.debug('Pubnub'){"#{app.env[:subscriptions].get_channels.to_s}.include? #{channel}"}
+            raise ArgumentError.new(:object => self, :message => 'You cannot leave channel that is not subscribed') unless app.env[:subscriptions].get_channels.include?(channel)
           end
 
           @channel_group.each do |channel_group|
-            $logger.debug('Pubnub'){"#{app.env[:subscriptions][@origin].get_channel_groups.to_s}.include? #{channel_group}"}
-            raise ArgumentError.new(:object => self, :message => 'You cannot leave channel group that is not subscribed') unless app.env[:subscriptions][@origin].get_channel_groups.include?(channel_group)
+            $logger.debug('Pubnub'){"#{app.env[:subscriptions].get_channel_groups.to_s}.include? #{channel_group}"}
+            raise ArgumentError.new(:object => self, :message => 'You cannot leave channel group that is not subscribed') unless app.env[:subscriptions].get_channel_groups.include?(channel_group)
           end
         end unless @force
 
         @channel.each do |channel|
-          app.env[:subscriptions][@origin].remove_channel(channel, app) if app.env[:subscriptions][@origin]
+          app.env[:subscriptions].remove_channel(channel, app) if app.env[:subscriptions]
           @left = true
         end unless @skip_remove
 
         @channel_group.each do |channel_group|
-          app.env[:subscriptions][@origin].remove_channel_group(channel_group, app) if app.env[:subscriptions][@origin]
+          app.env[:subscriptions].remove_channel_group(channel_group, app) if app.env[:subscriptions]
           @left = true
         end unless @skip_remove
       end

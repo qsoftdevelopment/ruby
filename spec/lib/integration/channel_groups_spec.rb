@@ -13,7 +13,7 @@ describe 'channel groups specific events' do
   context '#subscribe' do
 
     before :each do
-      @pubnub_client = Pubnub.new(subscribe_key: 'demo', publish_key: 'demo')
+      @pubnub_client = Pubnub.new(:disable_origin_manager => true, subscribe_key: 'demo', publish_key: 'demo')
     end
 
     it 'allows us to subscribe to cg and channel' do
@@ -37,7 +37,7 @@ describe 'channel groups specific events' do
 
   context '#leave' do
     before :each do
-      @pubnub_client = Pubnub.new(subscribe_key: 'demo', publish_key: 'demo')
+      @pubnub_client = Pubnub.new(:disable_origin_manager => true, subscribe_key: 'demo', publish_key: 'demo')
     end
 
     it 'leaves cg' do
@@ -46,7 +46,7 @@ describe 'channel groups specific events' do
         sleep(1)
         @pubnub_client.leave(channel: :bot, group: 'foo:foo', callback: callback)
         sleep(1)
-        expect(@pubnub_client.env[:subscriptions].empty?).to eq true
+        expect(@pubnub_client.env[:subscriptions].nil?).to eq true
       end
     end
 
@@ -56,14 +56,14 @@ describe 'channel groups specific events' do
         sleep(1)
         @pubnub_client.leave(group: 'foo:foo', callback: callback)
         sleep(1)
-        expect(@pubnub_client.env[:subscriptions].empty?).to eq true
+        expect(@pubnub_client.env[:subscriptions].nil?).to eq true
       end
     end
   end
 
   context '#here_now' do
     before :each do
-      @pubnub_client = Pubnub.new(subscribe_key: 'demo', publish_key: 'demo')
+      @pubnub_client = Pubnub.new(:disable_origin_manager => true, subscribe_key: 'demo', publish_key: 'demo')
     end
 
     it 'can check cg' do
@@ -78,7 +78,7 @@ describe 'channel groups specific events' do
   context 'PAM' do
 
     before :each do
-      @pubnub_client = Pubnub.new(:subscribe_key => 'sub-c-53c3d30a-4135-11e3-9970-02ee2ddab7fe', :publish_key => 'pub-c-15d6fd3c-05de-4abc-8eba-6595a441959d', :secret_key => 'sec-c-ZWYwMGJiZTYtMTQwMC00NDQ5LWI0NmEtMzZiM2M5NThlOTJh')
+      @pubnub_client = Pubnub.new(:disable_origin_manager => true, :subscribe_key => 'sub-c-53c3d30a-4135-11e3-9970-02ee2ddab7fe', :publish_key => 'pub-c-15d6fd3c-05de-4abc-8eba-6595a441959d', :secret_key => 'sec-c-ZWYwMGJiZTYtMTQwMC00NDQ5LWI0NmEtMzZiM2M5NThlOTJh')
       Pubnub::Grant.any_instance.stub(:current_time).and_return 1234567890
       Pubnub::Grant.any_instance.stub(:signature).and_return 'sig'
       Pubnub::Audit.any_instance.stub(:current_time).and_return 1234567890

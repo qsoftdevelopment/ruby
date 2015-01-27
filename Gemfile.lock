@@ -1,10 +1,11 @@
 PATH
   remote: .
   specs:
-    pubnub (3.7.0beta0)
+    pubnub (3.7.0)
       eventmachine (~> 1.0)
       json (~> 1.8)
       net-http-persistent (~> 2.9)
+      net-ping (~> 1.7)
 
 GEM
   remote: https://rubygems.org/
@@ -19,6 +20,7 @@ GEM
     json (1.8.1)
     method_source (0.8.2)
     net-http-persistent (2.9.4)
+    net-ping (1.7.6)
     pry (0.10.0)
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)

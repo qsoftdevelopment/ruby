@@ -25,7 +25,7 @@ describe "#subscribe" do
     }
 
     @pn = nil
-    @pn = Pubnub.new(:disable_persistent_connection => true, :max_retries => 0, :subscribe_key => :demo, :publish_key => :demo, :auth_key => :demoish_authkey, :secret_key => 'some_secret_key', :error_callback => @error_callback)
+    @pn = Pubnub.new(:disable_origin_manager => true, :disable_persistent_connection => true, :max_retries => 0, :subscribe_key => :demo, :publish_key => :demo, :auth_key => :demoish_authkey, :secret_key => 'some_secret_key', :error_callback => @error_callback)
     @pn.uuid = 'rubytests'
 
   end

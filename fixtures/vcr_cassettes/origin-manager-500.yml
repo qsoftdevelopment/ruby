@@ -1,0 +1,200 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: http://geo1.devbuild.pubnub.com/subscribe/demo/quiet_please_im_testing_here/0/0?pnsdk=PubNub-Ruby/3.7.0&uuid=2555e9e2-0744-4dbe-9810-27c6f42dbf8a
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - '*/*'
+      User-Agent:
+      - Ruby
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - 30
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Tue, 27 Jan 2015 17:04:04 GMT
+      Content-Type:
+      - text/javascript; charset="UTF-8"
+      Content-Length:
+      - '24'
+      Connection:
+      - keep-alive
+      Cache-Control:
+      - no-cache
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Allow-Methods:
+      - GET
+    body:
+      encoding: UTF-8
+      string: '[[],"14223782439823245"]'
+    http_version: 
+  recorded_at: Tue, 27 Jan 2015 17:04:04 GMT
+- request:
+    method: get
+    uri: http://geo1.devbuild.pubnub.com/time/0
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - '*/*'
+      User-Agent:
+      - Ruby
+      Host:
+      - geo1.devbuild.pubnub.com
+  response:
+    status:
+      code: 500
+      message: OK
+    headers:
+      Date:
+      - Tue, 27 Jan 2015 17:05:04 GMT
+      Content-Type:
+      - text/javascript; charset="UTF-8"
+      Content-Length:
+      - '19'
+      Connection:
+      - keep-alive
+      Cache-Control:
+      - no-cache
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Allow-Methods:
+      - GET
+    body:
+      encoding: UTF-8
+      string: '[14223782439823245]'
+    http_version: 
+  recorded_at: Tue, 27 Jan 2015 17:05:04 GMT
+- request:
+    method: get
+    uri: http://geo2.devbuild.pubnub.com/time/0
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - '*/*'
+      User-Agent:
+      - Ruby
+      Host:
+      - geo1.devbuild.pubnub.com
+  response:
+    status:
+      code: 500
+      message: OK
+    headers:
+      Date:
+      - Tue, 27 Jan 2015 17:05:04 GMT
+      Content-Type:
+      - text/javascript; charset="UTF-8"
+      Content-Length:
+      - '19'
+      Connection:
+      - keep-alive
+      Cache-Control:
+      - no-cache
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Allow-Methods:
+      - GET
+    body:
+      encoding: UTF-8
+      string: '[14223783040302795]'
+    http_version:
+  recorded_at: Tue, 27 Jan 2015 17:05:04 GMT
+- request:
+    method: get
+    uri: http://geo2.devbuild.pubnub.com/time/0
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - '*/*'
+      User-Agent:
+      - Ruby
+      Host:
+      - geo1.devbuild.pubnub.com
+  response:
+    status:
+      code: 500
+      message: OK
+    headers:
+      Date:
+      - Tue, 27 Jan 2015 17:05:04 GMT
+      Content-Type:
+      - text/javascript; charset="UTF-8"
+      Content-Length:
+      - '19'
+      Connection:
+      - keep-alive
+      Cache-Control:
+      - no-cache
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Allow-Methods:
+      - GET
+    body:
+      encoding: UTF-8
+      string: '[14223783040302795]'
+    http_version:
+  recorded_at: Tue, 27 Jan 2015 17:05:04 GMT
+- request:
+    method: get
+    uri: http://geo1.devbuild.pubnub.com/time/0
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - '*/*'
+      User-Agent:
+      - Ruby
+      Host:
+      - geo1.devbuild.pubnub.com
+  response:
+    status:
+      code: 500
+      message: OK
+    headers:
+      Date:
+      - Tue, 27 Jan 2015 17:05:04 GMT
+      Content-Type:
+      - text/javascript; charset="UTF-8"
+      Content-Length:
+      - '19'
+      Connection:
+      - keep-alive
+      Cache-Control:
+      - no-cache
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Allow-Methods:
+      - GET
+    body:
+      encoding: UTF-8
+      string: '[14223783040302795]'
+    http_version:
+  recorded_at: Tue, 27 Jan 2015 17:05:04 GMT
+recorded_with: VCR 2.9.2

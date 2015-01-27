@@ -6,7 +6,7 @@ describe "Pubnub::Envelope" do
 
       before(:each) do
         sleep(0.1)
-        @pn = Pubnub.new(:subscribe_key => :demo, :publish_key => :demo)
+        @pn = Pubnub.new(:disable_origin_manager => true, :subscribe_key => :demo, :publish_key => :demo)
       end
 
       context 'on one channel' do
@@ -154,7 +154,7 @@ describe "Pubnub::Envelope" do
     context 'with cipher key' do
 
       before(:each) do
-        @pn = Pubnub.new(:subscribe_key => :demo, :publish_key => :demo, :cipher_key => 'secret')
+        @pn = Pubnub.new(:disable_origin_manager => true, :subscribe_key => :demo, :publish_key => :demo, :cipher_key => 'secret')
       end
 
       context 'on one channel' do

@@ -24,7 +24,7 @@ describe "#leave" do
       @after_error_callback = true
     }
 
-    @pn = Pubnub.new(:max_retries => 0, :subscribe_key => :demo, :publish_key => :demo, :auth_key => :demoish_authkey, :secret_key => 'some_secret_key', :error_callback => @error_callback)
+    @pn = Pubnub.new(:disable_origin_manager => true, :max_retries => 0, :subscribe_key => :demo, :publish_key => :demo, :auth_key => :demoish_authkey, :secret_key => 'some_secret_key', :error_callback => @error_callback)
     @pn.uuid = 'rubytests'
   end
   context "uses ssl" do

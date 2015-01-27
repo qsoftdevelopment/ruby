@@ -8,7 +8,7 @@ describe 'auth_key flow' do
     sub_key = 'sub-c-a478dd2a-c33d-11e2-883f-02ee2ddab7fe'
     pub_key = 'pub-c-a2650a22-deb1-44f5-aa87-1517049411d5'
     sec_key = 'sec-c-YjFmNzYzMGMtYmI3NC00NzJkLTlkYzYtY2MwMzI4YTJhNDVh'
-    @pn = Pubnub.new(:subscribe_key => sub_key, :publish_key => pub_key, :secret_key => sec_key, :error_callback => lambda {|e|})
+    @pn = Pubnub.new(:disable_origin_manager => true, :subscribe_key => sub_key, :publish_key => pub_key, :secret_key => sec_key, :error_callback => lambda {|e|})
 
     Pubnub::Audit.any_instance.stub(:current_time).and_return 1234567890
     Pubnub::Audit.any_instance.stub(:signature).and_return 'kdDh/sFC3rSR%2Bt5AEymIc57d1velIr562V7usa5M4k0='

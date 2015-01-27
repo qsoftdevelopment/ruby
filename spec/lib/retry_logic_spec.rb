@@ -14,7 +14,7 @@ describe Pubnub::Event do
       @error_callback_counter += 1
     end
 
-    @pubnub = Pubnub.new(
+    @pubnub = Pubnub.new(:disable_origin_manager => true,
         :subscribe_key => :demo,
         :publish_key => :demo,
         :max_retries => 5,

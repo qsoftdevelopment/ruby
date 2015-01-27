@@ -5,7 +5,6 @@ module Pubnub
 
     def initialize(options, app)
       @app              = app
-      @origin           = options[:origin]           || app.env[:origin]
       @channel          = options[:channel]
       @channel_group    = options[:group]
       @message          = options[:message]
@@ -213,7 +212,7 @@ module Pubnub
 
     def origin(app)
       h = @ssl ? 'https://' : 'http://'
-      h + @origin
+      h + app.env[:origins_pool].first
     end
 
     def parameters(app)
@@ -254,15 +253,15 @@ module Pubnub
     private
 
     def setup_connection(app)
-      app.single_event_connections_pool[@origin] = new_connection(app)
+      app.single_event_connection = new_connection(app)
     end
 
     def connection_exist?(app)
-      !app.single_event_connections_pool[@origin].nil? && !app.single_event_connections_pool[@origin].nil?
+      !app.single_event_connection.nil? && !app.single_event_connection.nil?
     end
 
     def get_connection(app)
-      app.single_event_connections_pool[@origin]
+      app.single_event_connection
     end
 
     def new_connection(app)
@@ -290,7 +289,7 @@ module Pubnub
             app.heartbeat(:channel => @channel, :http_sync => true)
             envelopes = super
             @channel.each do |channel|
-              app.leave(:channel => channel, :http_sync => true, :skip_remove => true, :force => true) unless (app.env[:subscriptions][@origin] && app.env[:subscriptions][@origin].get_channels.include(channel))
+              app.leave(:channel => channel, :http_sync => true, :skip_remove => true, :force => true) unless (app.env[:subscriptions] && app.env[:subscriptions].get_channels.include(channel))
             end
           else
             envelopes = super
@@ -300,9 +299,10 @@ module Pubnub
           $logger.debug('Pubnub'){'SubscribeEvent#fire async'}
           $logger.debug('Pubnub'){"Channel: #{@channel}"}
           setup_connection(app) unless connection_exist?(app)
-          unless app.env[:subscriptions][@origin].blank?
+
+          unless app.env[:subscriptions].blank?
             @channel.each do |channel|
-              if app.env[:subscriptions][@origin].get_channels.include?(channel)
+              if app.env[:subscriptions].get_channels.include?(channel)
                 @channel.delete(channel)
                 $logger.error('Pubnub'){"Already subscribed to channel #{channel}, you have to leave that channel first"}
               end
@@ -310,15 +310,15 @@ module Pubnub
 
             @channel.each do |channel|
               $logger.debug('Pubnub'){'SubscribeEvent#add_channel | Adding channel'}
-              app.env[:subscriptions][@origin].add_channel(channel, app)
+              app.env[:subscriptions].add_channel(channel, app)
             end
 
             @channel_group.each do |cg|
-              if app.env[:subscriptions][@origin].get_channel_groups.include?(cg)
+              if app.env[:subscriptions].get_channel_groups.include?(cg)
                 @channel_group.delete(cg)
                 $logger.error('Pubnub'){"Already subscribed to channel group #{cg}, you have to leave that channel first"}
               else
-                app.env[:subscriptions][@origin].add_channel_group(cg, app)
+                app.env[:subscriptions].add_channel_group(cg, app)
               end
             end
 
@@ -330,44 +330,38 @@ module Pubnub
             end
           end
 
-          if app.env[:subscriptions][@origin].nil?
-            app.env[:subscriptions][@origin]                        = self            if app.env[:subscriptions][@origin].nil?
-            app.env[:callbacks_pool]                                = Hash.new        if app.env[:callbacks_pool].nil?
-            app.env[:callbacks_pool][:channel]                      = Hash.new        if app.env[:callbacks_pool][:channel].nil?
-            app.env[:callbacks_pool][:channel_group]                = Hash.new        if app.env[:callbacks_pool][:channel_group].nil?
-            app.env[:callbacks_pool][:channel][@origin]             = Hash.new        if app.env[:callbacks_pool][:channel][@origin].nil?
-            app.env[:callbacks_pool][:channel_group][@origin]       = Hash.new        if app.env[:callbacks_pool][:channel_group][@origin].nil?
-            app.env[:error_callbacks_pool]                          = Hash.new        if app.env[:error_callbacks_pool].nil?
-            app.env[:error_callbacks_pool][:channel]                = Hash.new        if app.env[:error_callbacks_pool][:channel].nil?
-            app.env[:error_callbacks_pool][:channel][@origin]       = @error_callback if app.env[:error_callbacks_pool][:channel][@origin].nil?
-            app.env[:error_callbacks_pool][:channel_group]          = Hash.new        if app.env[:error_callbacks_pool][:channel_group].nil?
-            app.env[:error_callbacks_pool][:channel_group][@origin] = @error_callback if app.env[:error_callbacks_pool][:channel_group][@origin].nil?
+          if app.env[:subscriptions].nil?
+            app.env[:subscriptions]                                  = self
+            app.env[:callbacks_pool]                                 = Hash.new        if app.env[:callbacks_pool].nil?
+            app.env[:callbacks_pool][:channel]                       = Hash.new        if app.env[:callbacks_pool][:channel].nil?
+            app.env[:callbacks_pool][:channel_group]                 = Hash.new        if app.env[:callbacks_pool][:channel_group].nil?
+            app.env[:error_callbacks_pool]                           = Hash.new        if app.env[:error_callbacks_pool].nil?
+            app.env[:error_callbacks_pool][:channel]                 = @error_callback if app.env[:error_callbacks_pool][:channel].nil?
+            app.env[:error_callbacks_pool][:channel_group]           = @error_callback if app.env[:error_callbacks_pool][:channel_group].nil?
 
             @channel.each do |channel|
-              app.env[:callbacks_pool][:channel][@origin][channel]            = Hash.new
-              app.env[:callbacks_pool][:channel][@origin][channel][:callback] = @callback unless app.env[:callbacks_pool][:channel][@origin][:callback]
+              app.env[:callbacks_pool][:channel][channel]            = Hash.new
+              app.env[:callbacks_pool][:channel][channel][:callback] = @callback unless app.env[:callbacks_pool][:channel][:callback]
             end
 
             @channel_group.each do |channel_group|
-              app.env[:callbacks_pool][:channel_group][@origin][channel_group]            = Hash.new
-              app.env[:callbacks_pool][:channel_group][@origin][channel_group][:callback] = @callback unless app.env[:callbacks_pool][:channel_group][@origin][:callback]
+              app.env[:callbacks_pool][:channel_group][channel_group]            = Hash.new
+              app.env[:callbacks_pool][:channel_group][channel_group][:callback] = @callback unless app.env[:callbacks_pool][:channel_group][:callback]
             end
 
           else
             @channel.each do |channel|
-              app.env[:callbacks_pool][:channel][@origin][channel] = Hash.new
-              app.env[:callbacks_pool][:channel][@origin][channel] = Hash.new
+              app.env[:callbacks_pool][:channel][channel] = Hash.new
 
-              app.env[:callbacks_pool][:channel][@origin][channel][:callback]       = @callback       unless app.env[:callbacks_pool][:channel][@origin][:callback]
-              app.env[:callbacks_pool][:channel][@origin][channel][:error_callback] = @error_callback unless app.env[:callbacks_pool][:channel][@origin][:error_callback]
+              app.env[:callbacks_pool][:channel][channel][:callback]       = @callback       unless app.env[:callbacks_pool][:channel][:callback]
+              app.env[:callbacks_pool][:channel][channel][:error_callback] = @error_callback unless app.env[:callbacks_pool][:channel][:error_callback]
             end
 
             @channel_group.each do |channel_group|
-              app.env[:callbacks_pool][:channel_group][@origin][channel_group] = Hash.new
-              app.env[:callbacks_pool][:channel_group][@origin][channel_group] = Hash.new
+              app.env[:callbacks_pool][:channel_group][channel_group] = Hash.new
 
-              app.env[:callbacks_pool][:channel_group][@origin][channel_group][:callback]       = @callback       unless app.env[:callbacks_pool][:channel_group][@origin][:callback]
-              app.env[:callbacks_pool][:channel_group][@origin][channel_group][:error_callback] = @error_callback unless app.env[:callbacks_pool][:channel_group][@origin][:error_callback]
+              app.env[:callbacks_pool][:channel_group][channel_group][:callback]       = @callback       unless app.env[:callbacks_pool][:channel_group][:callback]
+              app.env[:callbacks_pool][:channel_group][channel_group][:error_callback] = @error_callback unless app.env[:callbacks_pool][:channel_group][:error_callback]
             end
           end
 
@@ -429,7 +423,7 @@ module Pubnub
       parameters = super(app)
       parameters.merge!({:heartbeat => app.env[:heartbeat]}) if app.env[:heartbeat]
       parameters.merge!({'channel-group' => format_channel_group(@channel_group, true).join(',')}) unless @channel_group.blank?
-      parameters.merge!({:state => encode_state(app.env[:state][@origin])}) if app.env[:state] && app.env[:state][@origin]
+      parameters.merge!({:state => encode_state(app.env[:state])}) if app.env[:state] && app.env[:state]
       parameters
     end
 
@@ -444,17 +438,14 @@ module Pubnub
           update_timetoken(app, envelope.timetoken)
         end
       end
-      app.env[:wait_for_response][@origin] = false unless @http_sync
+      app.env[:wait_for_response] = false unless @http_sync
     end
 
     def shutdown_subscribe(app)
-      app.env[:subscriptions][@origin]  = nil
-      app.env[:subscriptions].delete(@origin)
-      app.env[:callbacks_pool][@origin] = nil
-      app.env[:callbacks_pool].delete(@origin)
-      app.subscribe_event_connections_pool[@origin].shutdown_in_all_threads
-      app.subscribe_event_connections_pool[@origin] = nil
-      app.subscribe_event_connections_pool.delete(@origin)
+      app.env[:subscriptions] = nil
+      app.env[:callbacks_pool] = nil
+      app.subscribe_event_connection.shutdown_in_all_threads
+      app.subscribe_event_connection = nil
     end
 
     def fire_callbacks(envelopes, app)
@@ -464,15 +455,15 @@ module Pubnub
         begin
           $logger.debug('Pubnub'){'Event#fire_callbacks async'}
           envelopes.each do |envelope|
-            if envelope.channel_group && app.env[:callbacks_pool][:channel_group][@origin][envelope.channel_group]
-              app.env[:callbacks_pool][:channel_group][@origin][envelope.channel_group][:callback].call(envelope) if !envelope.error && !envelope.timetoken_update
+            if envelope.channel_group && app.env[:callbacks_pool][:channel_group][envelope.channel_group]
+              app.env[:callbacks_pool][:channel_group][envelope.channel_group][:callback].call(envelope) if !envelope.error && !envelope.timetoken_update
             else
-              app.env[:callbacks_pool][:channel][@origin][envelope.channel][:callback].call(envelope) if !envelope.error && !envelope.timetoken_update
+              app.env[:callbacks_pool][:channel][envelope.channel][:callback].call(envelope) if !envelope.error && !envelope.timetoken_update
             end
           end
           $logger.debug('Pubnub'){'We can send next request now'}
-          app.env[:error_callbacks_pool][:channel][@origin].call(envelopes.first)       if envelopes.first.error && !envelopes.first.channel_group
-          app.env[:error_callbacks_pool][:channel_group][@origin].call(envelopes.first) if envelopes.first.error &&  envelopes.first.channel_group
+          app.env[:error_callbacks_pool][:channel].call(envelopes.first)       if envelopes.first.error && !envelopes.first.channel_group
+          app.env[:error_callbacks_pool][:channel_group].call(envelopes.first) if envelopes.first.error &&  envelopes.first.channel_group
 
         rescue => error
           $logger.error('Pubnub'){error}
@@ -483,15 +474,15 @@ module Pubnub
     end
 
     def setup_connection(app)
-      app.subscribe_event_connections_pool[@origin] = new_connection(app)
+      app.subscribe_event_connection = new_connection(app)
     end
 
     def connection_exist?(app)
-      !app.subscribe_event_connections_pool[@origin].nil? && !app.subscribe_event_connections_pool[@origin].nil?
+      !app.subscribe_event_connection.nil? && !app.subscribe_event_connection.nil?
     end
 
     def get_connection(app)
-      app.subscribe_event_connections_pool[@origin]
+      app.subscribe_event_connection
     end
 
     def path(app)
@@ -610,7 +601,7 @@ module Pubnub
         connection = Net::HTTP::Persistent.new "pubnub_ruby_client_v#{Pubnub::VERSION}"
         connection.idle_timeout   = app.env[:subscribe_timeout]
         connection.read_timeout   = app.env[:subscribe_timeout]
-        @connect_callback.call "New connection to #{@origin}"
+        @connect_callback.call "New connection to #{app.env[:origins_pool].first}"
         connection.proxy_from_env
         connection
       end

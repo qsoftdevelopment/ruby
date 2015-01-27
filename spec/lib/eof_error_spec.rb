@@ -25,7 +25,7 @@ describe 'quick eof error test' do
     }
 
     @pn = nil
-    @pn = Pubnub.new(:max_retries => 1, :subscribe_key => :demo, :publish_key => :demo, :auth_key => :demoish_authkey, :secret_key => 'some_secret_key', :error_callback => @error_callback)
+    @pn = Pubnub.new(:disable_origin_manager => true, :max_retries => 1, :subscribe_key => :demo, :publish_key => :demo, :auth_key => :demoish_authkey, :secret_key => 'some_secret_key', :error_callback => @error_callback)
     @pn.uuid = 'rubytests'
 
     Pubnub::Subscribe.any_instance.stub(:send_request){

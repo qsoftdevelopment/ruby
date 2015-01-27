@@ -15,6 +15,7 @@ require 'open-uri'
 require 'openssl'
 require 'eventmachine'
 require 'net/http/persistent'
+require 'net/ping'
 require 'logger'
 
 require 'pubnub/version'

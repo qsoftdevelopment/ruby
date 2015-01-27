@@ -19,7 +19,7 @@ describe '#publish' do
       context 'without encrypting message' do
 
         before(:each) do
-          @pubnub = Pubnub.new(
+          @pubnub = Pubnub.new(:disable_origin_manager => true,
               :max_retries => 0,
               :subscribe_key => :demo,
               :publish_key => :demo,
@@ -240,7 +240,7 @@ describe '#publish' do
       context 'with encrypting message' do
 
         before(:each) do
-          @pubnub = Pubnub.new(
+          @pubnub = Pubnub.new(:disable_origin_manager => true,
               :max_retries => 0,
               :subscribe_key => :demo,
               :publish_key => :demo,
@@ -464,7 +464,7 @@ describe '#publish' do
       context 'without encrypting message' do
 
         before(:each) do
-          @pubnub = Pubnub.new(
+          @pubnub = Pubnub.new(:disable_origin_manager => true,
               :max_retries => 0,
               :subscribe_key => :demo,
               :publish_key => :demo,
@@ -684,7 +684,7 @@ describe '#publish' do
       context 'with encrypting message' do
 
         before(:each) do
-          @pubnub = Pubnub.new(
+          @pubnub = Pubnub.new(:disable_origin_manager => true,
               :max_retries => 0,
               :subscribe_key => :demo,
               :publish_key => :demo,
@@ -909,7 +909,7 @@ describe '#publish' do
       context 'without encrypting message' do
 
         before(:each) do
-          @pubnub = Pubnub.new(
+          @pubnub = Pubnub.new(:disable_origin_manager => true,
               :max_retries => 0,
               :subscribe_key => :demo,
               :publish_key => :demo,
@@ -1131,7 +1131,7 @@ describe '#publish' do
       context 'with encrypting message' do
 
         before(:each) do
-          @pubnub = Pubnub.new(
+          @pubnub = Pubnub.new(:disable_origin_manager => true,
               :max_retries => 0,
               :subscribe_key => :demo,
               :publish_key => :demo,
@@ -1356,7 +1356,7 @@ describe '#publish' do
       context 'without encrypting message' do
 
         before(:each) do
-          @pubnub = Pubnub.new(
+          @pubnub = Pubnub.new(:disable_origin_manager => true,
               :max_retries => 0,
               :subscribe_key => :demo,
               :publish_key => :demo,
@@ -1577,7 +1577,7 @@ describe '#publish' do
       context 'with encrypting message' do
 
         before(:each) do
-          @pubnub = Pubnub.new(
+          @pubnub = Pubnub.new(:disable_origin_manager => true,
               :max_retries => 0,
               :subscribe_key => :demo,
               :publish_key => :demo,
@@ -1802,7 +1802,7 @@ describe '#publish' do
     context 'array of hashes' do
       context 'and its plain' do
         it 'publishes it correctly' do
-          @pubnub = Pubnub.new(
+          @pubnub = Pubnub.new(:disable_origin_manager => true,
               :max_retries => 0,
               :subscribe_key => :demo,
               :publish_key => :demo,
@@ -1838,7 +1838,7 @@ describe '#publish' do
 
       context 'and its encrypted' do
         it 'publishes it correctly' do
-          @pubnub = Pubnub.new(
+          @pubnub = Pubnub.new(:disable_origin_manager => true,
               :max_retries => 0,
               :subscribe_key => :demo,
               :publish_key => :demo,

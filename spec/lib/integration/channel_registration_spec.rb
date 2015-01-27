@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe '#channel_registration' do
 
-  let(:pubnub_client) { Pubnub.new(subscribe_key: 'demo', publish_key: 'demo') }
+  let(:pubnub_client) { Pubnub.new(:disable_origin_manager => true, subscribe_key: 'demo', publish_key: 'demo') }
   let(:callback)      { lambda { |envelope| @envelopes = [envelope] } }
 
   context 'sync' do
