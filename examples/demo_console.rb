@@ -44,6 +44,7 @@ class DemoConsole
       :B    => :set_auth_key,
       :C    => :show_state,
       :D    => :set_state,
+      :E    => :get_online_origins,
       :EXIT => :exit
   }
 
@@ -90,6 +91,8 @@ class DemoConsole
       @secret_key    = nil
     end
 
+    origins_pool = origins_pool_ask_dialog
+
     set_uuid_and_auth
 
     my_logger = Logger.new(STDOUT)
@@ -101,6 +104,7 @@ class DemoConsole
       :secret_key     => @secret_key,
       :error_callback => method(:error_callback),
       :auth_key       => @auth_key,
+      :origins_pool   => origins_pool
       # :logger         => my_logger
     )
 
@@ -185,6 +189,7 @@ class DemoConsole
         puts 'B. Set auth_key'
         puts 'C. Check state'
         puts 'D. Set state'
+        puts 'E. Check online origins'
         print "\nYour choice: ".red
         choice = gets.chomp!.to_s.upcase.to_sym
       end
@@ -257,6 +262,8 @@ class DemoConsole
           print 'ERROR! Invalid state.'.bg_red
           print e
         end
+      when :get_online_origins
+        puts @pubnub.env[:origins_pool]
       end
       choice = nil
     end
@@ -416,6 +423,13 @@ class DemoConsole
 
                                                          Pubnub Demo Console
     '.red
+  end
+
+  def origins_pool_ask_dialog
+    puts `clear`
+    puts 'Provide origins pool as array of strings or use default (hit enter):'
+    origins_pool_string = gets
+    eval(origins_pool_string)
   end
 
   def callback(envelope)
