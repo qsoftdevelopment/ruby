@@ -1,5 +1,7 @@
 module Pubnub
   class OriginManager
+    attr_reader :last_failback_ping_start, :last_alive_ping_start, :dead_origins
+
     def initialize(app)
       @app  = app
 
@@ -11,22 +13,30 @@ module Pubnub
       @dead_origins  = []
     end
 
-    # todo: setup default values in client
-
     def start_current_origin_manager
       $logger.debug('Pubnub') { 'Starting ORIGIN MANAGER' }
 
+      failures = 0
+
       EM.add_periodic_timer(@ping_interval) do
+        @last_alive_ping_start = ::Time.now
         begin
           current_origin = @app.env[:origins_pool].first
           $logger.debug('Pubnub') { "Pinging #{current_origin + '/time/0'}" }
 
 
-          unless origin_online?(current_origin)
+          if origin_online?(current_origin)
+            failures = 0
+          else
+            failures += 1
+          end
+
+          if failures > @max_retries
             set_origin_offline(current_origin)
             restart_subscription
             start_failback_manager
           end
+
         rescue => e
           $logger.error "FATAL! #{e}"
         end unless @app.env[:origins_pool].empty?
@@ -38,6 +48,7 @@ module Pubnub
 
       successes = 0
       @failback_manager = EM.add_periodic_timer(@app.env[:origin_heartbeat_interval]) do
+        @last_failback_ping_start = ::Time.now
         begin
           dead_origin_to_test = @dead_origins.last
           $logger.debug('Pubnub') { "Pinging dead origin #{dead_origin_to_test + '/time/0'}" }
@@ -55,13 +66,21 @@ module Pubnub
 
           if successes == @max_retries
             set_origin_online(dead_origin_to_test)
-            @failback_manager.cancel if @dead_origins.empty?
+            restart_subscription
+            if @dead_origins.empty?
+              @failback_manager.cancel
+              @failback_manager = nil
+            end
           end
 
         rescue => e
           $logger.error "FATAL! #{e}"
         end
       end
+    end
+
+    def failback_manager_running?
+      @failback_manager ? true : false
     end
 
     private
@@ -79,7 +98,6 @@ module Pubnub
             $logger.debug('Pubnub') { "Origin manager: #{origin} is online" }
             return true
           else
-            $logger.debug('Pubnub') { "Origin manager: #{origin} is coming back to us" }
             retries_cnt += 1
           end
         else

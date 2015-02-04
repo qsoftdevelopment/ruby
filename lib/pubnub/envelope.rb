@@ -19,7 +19,8 @@ module Pubnub
         :service,
         :status,
         :timetoken,
-        :timetoken_update
+        :timetoken_update,
+        :uri
     ]
 
     INSTANCE_VARIABLES.each do |var_name|

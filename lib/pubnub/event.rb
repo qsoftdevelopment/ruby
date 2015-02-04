@@ -42,10 +42,15 @@ module Pubnub
     end
 
     def send_request(app)
+      req_uri = uri(app)
+      req     = Net::HTTP::Get.new req_uri
+
       if app.disabled_persistent_connection?
-        @response = Net::HTTP.get_response uri(app)
+        @response = Net::HTTP.start(req_uri.hostname, use_ssl: @ssl) do |http|
+          http.request req
+        end
       else
-        @response = get_connection(app).request(uri(app))
+        @response = get_connection(app).request req_uri, req
       end
     end
 
@@ -65,6 +70,7 @@ module Pubnub
           start_event(app, count + 1)
         end
       rescue => e
+        @response = nil
         $logger.error('Pubnub'){e.inspect}
         if count <= app.env[:max_retries]
           start_event(app, count + 1)
@@ -145,6 +151,7 @@ module Pubnub
       $logger.debug('Pubnub'){'Event#add_common_data_to_envelopes'}
 
       envelopes.each do |envelope|
+        envelope.uri           = response.uri
         envelope.response      = response.body
         envelope.object        = response
         envelope.status        = response.code.to_i

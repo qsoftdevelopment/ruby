@@ -81,8 +81,8 @@ class DemoConsole
       @secret_key = gets.chomp!
 
       @origin        = 'pubsub.pubnub.com' if @origin.blank?
-      @subscribe_key = 'demo'           if @subscribe_key.blank?
-      @publish_key   = 'demo'           if @publish_key.blank?
+      @subscribe_key = 'demo'              if @subscribe_key.blank?
+      @publish_key   = 'demo'              if @publish_key.blank?
       @secret_key    = nil                 if @secret_key.blank?
     else
       @origin        = 'pubsub.pubnub.com'
@@ -93,9 +93,9 @@ class DemoConsole
 
     origins_pool = origins_pool_ask_dialog
 
+    callback_setup
+    setup_origin_manager
     set_uuid_and_auth
-
-    my_logger = Logger.new(STDOUT)
 
     @pubnub = Pubnub.new(
 
@@ -104,8 +104,12 @@ class DemoConsole
       :secret_key     => @secret_key,
       :error_callback => method(:error_callback),
       :auth_key       => @auth_key,
-      :origins_pool   => origins_pool
-      # :logger         => my_logger
+      :origins_pool   => origins_pool,
+
+      # ORIGIN MANAGER
+      :origin_heartbeat_interval    => @origin_heartbeat_interval,
+      :non_subscribe_timeout        => @non_subscribe_timeout,
+      :origin_heartbeat_max_retries => @origin_heartbeat_max_retries
     )
 
     @pubnub.set_uuid(@uuid) unless @uuid.blank?
@@ -405,7 +409,7 @@ class DemoConsole
         end
       end
     end
-    options.merge({:callback => method(:callback)})
+    options.merge({:callback => @callback})
   end
 
   def acceptance
@@ -427,13 +431,23 @@ class DemoConsole
 
   def origins_pool_ask_dialog
     puts `clear`
+    print_pubnub
     puts 'Provide origins pool as array of strings or use default (hit enter):'
     origins_pool_string = gets
     eval(origins_pool_string)
   end
 
-  def callback(envelope)
-    ap envelope.inspect
+  def callback_setup
+    puts `clear`
+    print_pubnub
+    print 'Do You want callback to print whole [E]nvelope object or just [M]essage? (default M): '
+    option = gets
+    @callback = case option
+                  when 'E'
+                    lambda { |e| ap e.inspect }
+                  else
+                    lambda { |e| ap e.msg }
+                end
   end
 
   def connect_callback(data)
@@ -443,6 +457,18 @@ class DemoConsole
   def error_callback(error)
     puts 'ERROR'.bg_red
     ap error
+  end
+
+  def setup_origin_manager
+    puts `clear`
+    print_pubnub
+    puts 'Setup OriginManager configuration variables:'
+    print 'PING INTERVAL: '
+    @origin_heartbeat_interval = gets.to_i
+    print 'NON SUBSCRIBE TIMEOUT: '
+    @non_subscribe_timeout = gets.to_i
+    print 'MAX RETRIES: '
+    @origin_heartbeat_max_retries = gets.to_i
   end
 end
 

@@ -15,7 +15,7 @@ module Pubnub
     include Configuration
 
     attr_reader :env
-    attr_accessor :single_event_connection, :subscribe_event_connection, :uuid, :async_events
+    attr_accessor :single_event_connection, :subscribe_event_connection, :uuid, :async_events, :origin_manager
 
     EVENTS = %w(publish subscribe presence leave history here_now audit grant revoke time heartbeat where_now state set_state channel_registration)
     VERSION = Pubnub::VERSION
@@ -151,44 +151,47 @@ module Pubnub
     end
 
     def start_subscribe(override = false)
+      begin
+        start_event_machine
+        start_respirator if @env[:heartbeat]
+        start_origin_manager unless @origin_manager || @env[:disable_origin_manager]
 
-      start_event_machine
-      start_respirator if @env[:heartbeat]
-      start_origin_manager unless @origin_manager || @env[:disable_origin_manager]
+        if @env[:subscribe_railgun] && @subscribe_deffered_thread
+          $logger.debug('Pubnub'){'Pubnub::Client#start_subscribe | Aborting previous request'}
+          @subscribe_deffered_thread.kill
+          Thread.pass until @subscribe_deffered_thread.status == false
+        end
 
-      if @env[:subscribe_railgun] && @subscribe_deffered_thread
-        $logger.debug('Pubnub'){'Pubnub::Client#start_subscribe | Aborting previous request'}
-        @subscribe_deffered_thread.kill
-        Thread.pass until @subscribe_deffered_thread.status == false
-      end
+        if override
+          $logger.debug('Pubnub'){'Pubnub::Client#start_subscribe | Override'}
+          @env[:subscribe_railgun].cancel
+          @env[:subscribe_railgun] = nil
+        end
 
-      # if override
-      #   $logger.debug('Pubnub'){'Pubnub::Client#start_subscribe | Override'}
-      #   @env[:subscribe_railgun].cancel
-      #   @env[:subscribe_railgun] = nil
-      # end
+        @env[:wait_for_response] = false
+        unless @env[:subscribe_railgun]
+          @env[:subscribe_railgun] = EM.add_periodic_timer(PERIODIC_TIMER_INTERVAL) do
+            begin
+              unless @env[:wait_for_response]
+                @env[:wait_for_response] = true
 
-      @env[:wait_for_response] = false
-      unless @env[:subscribe_railgun]
-        @env[:subscribe_railgun] = EM.add_periodic_timer(PERIODIC_TIMER_INTERVAL) do
-          begin
-            unless @env[:wait_for_response]
-              @env[:wait_for_response] = true
+                $logger.debug('Pubnub'){'Async subscription running'}
+                $logger.debug('Pubnub'){"timetoken: #{@env[:timetoken]}"}
 
-              $logger.debug('Pubnub'){'Async subscription running'}
-              $logger.debug('Pubnub'){"timetoken: #{@env[:timetoken]}"}
+                EM.defer do
+                  @subscribe_deffered_thread = Thread.current
+                  @env[:subscriptions].start_event(self) if @env[:subscriptions]
+                end
 
-              EM.defer do
-                @subscribe_deffered_thread = Thread.current
-                @env[:subscriptions].start_event(self) if @env[:subscriptions]
               end
-
+            rescue => e
+              $logger.error('Pubnub'){e}
+              $logger.error('Pubnub'){e.backtrace}
             end
-          rescue => e
-            $logger.error('Pubnub'){e}
-            $logger.error('Pubnub'){e.backtrace}
           end
         end
+      rescue => e
+        $logger.error('Pubnub'){ "Critical error, subscription crashed. Error: #{e}\n#{e.backtrace}" }
       end
     end
 

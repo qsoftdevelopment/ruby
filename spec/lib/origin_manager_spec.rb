@@ -111,5 +111,9 @@ describe Pubnub::OriginManager do
         end
       end
     end
+
+    it 'case#2' do
+
+    end
   end
 end

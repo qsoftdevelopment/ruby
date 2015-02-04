@@ -1,12 +1,12 @@
 module Pubnub
   module Configuration
-    DEFAULT_ERROR_CALLBACK             = lambda { |err| puts err.inspect }
+    DEFAULT_ERROR_CALLBACK             = lambda { |err| puts "ERROR: #{err.inspect}" }
     DEFAULT_CONNECT_CALLBACK           = lambda { |msg| msg.inspect }
     DEFAULT_SSL                        = false
     DEFAULT_CONNECTION_PORT            = 80
     DEFAULT_NON_SUBSCRIBE_TIMEOUT      = 5
     DEFAULT_ORIG_INTERVAL_AFTER_F      = 10
-    DEFAULT_ORIGIN_HEARTBEAT_INTERVAL  = 60
+    DEFAULT_ORIGIN_HEARTBEAT_INTERVAL  = 30
     DEFAULT_ORIG_HEARTBEAT_MAX_RETRIES = 3
     DEFAULT_SUBSCRIBE_TIMEOUT          = 310
     DEFAULT_RECONNECT_ATTEMPTS         = 10
@@ -29,10 +29,7 @@ module Pubnub
     MAX_RETRIES                        = 10
     RETRIES_INTERVAL                   = 1
     DEFAULT_TTL                        = 1440
-    DEFAULT_ORIGINS_POOL               = ['geo1.devbuild.pubnub.com',
-                                          'geo2.devbuild.pubnub.com',
-                                          'geo3.devbuild.pubnub.com',
-                                          'geo4.devbuild.pubnub.com']
+    DEFAULT_ORIGINS_POOL               = ['pubsub.pubnub.com']
   end
 end
 
