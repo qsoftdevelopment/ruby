@@ -83,7 +83,7 @@ sleep 20
 
 puts '              Script: Now, let\'s take down geo2 as well (for 50s).'
 
-take_down(2, 50, client)
+take_down(2, 60, client)
 
 puts '              Script: We have to wait a moment before connecting to geo3.'
 
@@ -96,7 +96,7 @@ sleep(3 * TIMEOUT * (MAX_RETRIES + 1))
 puts '              Script: Let\'s take down geo1 once again and look if failback manager stopped fine and will start fine as well.'
 puts '              Script: When You want to quit just break script hitting ctrl+z.'
 
-take_down(1, 40, client)
+take_down(1, 60, client)
 countdown(TIMEOUT * MAX_RETRIES, 1)
 
 while true do end
