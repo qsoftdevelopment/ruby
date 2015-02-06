@@ -70,7 +70,7 @@ module Pubnub
             end
 
             if successes == @max_retries
-              logger.debug('Pubnub::OriginManager') { "Origin comes back to us! #{dead_origin_to_test}" }
+              $logger.debug('Pubnub::OriginManager') { "Origin comes back to us! #{dead_origin_to_test}" }
               successes = 0
               set_origin_online(dead_origin_to_test)
               restart_subscription
