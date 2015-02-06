@@ -77,11 +77,14 @@ module Pubnub
               if @dead_origins.empty?
                 $logger.debug('Pubnub::OriginManager') { 'Cancelling FailbackManagera' }
                 @failback_manager.cancel
+                until @failback_manager.instance_variable_get(:@cancelled) do end
               end
             end
           else
+            restart_subscription
             $logger.debug('Pubnub::OriginManager') { 'Cancelling FailbackManagerb' }
             @failback_manager.cancel
+            until @failback_manager.instance_variable_get(:@cancelled) do end
           end
 
         rescue => e
@@ -91,7 +94,7 @@ module Pubnub
     end
 
     def failback_manager_running?
-      if @failback_manager && @failback_manager.instance_variable_get(:@cancelled)
+      if @failback_manager && !@failback_manager.instance_variable_get(:@cancelled)
         true
       else
         false
@@ -116,7 +119,7 @@ module Pubnub
     end
 
     def restart_subscription
-      $logger.warn('Pubnub::OriginManager') { 'Restarting subscription' }
+      $logger.debug('Pubnub::OriginManager') { 'Restarting subscription' }
       @app.start_subscribe(true)
     end
 
@@ -135,7 +138,7 @@ module Pubnub
     end
 
     def alive_and_valid?(uri)
-      $logger.warn('Pubnub::OriginManager') { "Checking alive_and_valid #{uri}" }
+      $logger.debug('Pubnub::OriginManager') { "Checking alive_and_valid #{uri}" }
       begin
         response = Net::HTTP.start(uri.host, uri.port) do |http|
           request = Net::HTTP::Get.new uri
