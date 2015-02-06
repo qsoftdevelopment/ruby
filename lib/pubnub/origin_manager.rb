@@ -32,13 +32,14 @@ module Pubnub
           end
 
           if failures > @max_retries
+            failures = 0
             set_origin_offline(current_origin)
             restart_subscription
-            start_failback_manager
+            start_failback_manager unless failback_manager_running?
           end
 
         rescue => e
-          $logger.error "FATAL! #{e}"
+          $logger.error('Pubnub') { "#{e} #{e.backtrace}" }
         end unless @app.env[:origins_pool].empty?
       end
     end
@@ -51,36 +52,46 @@ module Pubnub
         @last_failback_ping_start = ::Time.now
         begin
           dead_origin_to_test = @dead_origins.last
-          $logger.debug('Pubnub') { "Pinging dead origin #{dead_origin_to_test + '/time/0'}" }
-          uri_to_test = URI.parse(@http + dead_origin_to_test + '/time/0')
 
-          $logger.debug('Pubnub') { "\n\nOrigin manager: failback manager #{dead_origin_to_test}\n\n" }
+          if dead_origin_to_test != nil # Timer could fire again before cancelled
 
-          if alive_and_valid?(uri_to_test)
-            $logger.warn('Pubnub') { "Origin manager: #{dead_origin_to_test} is online, adding success"}
-            successes += 1
-          else
-            $logger.warn('Pubnub') { "Origin manager: #{dead_origin_to_test} is offline"}
-            successes = 0
-          end
+            $logger.debug('Pubnub') { "Pinging dead origin #{dead_origin_to_test + '/time/0'}" }
+            uri_to_test = URI.parse(@http + dead_origin_to_test + '/time/0')
 
-          if successes == @max_retries
-            set_origin_online(dead_origin_to_test)
-            restart_subscription
-            if @dead_origins.empty?
-              @failback_manager.cancel
-              @failback_manager = nil
+            $logger.debug('Pubnub') { "Origin manager: failback manager #{dead_origin_to_test}" }
+
+            if alive_and_valid?(uri_to_test)
+              $logger.warn('Pubnub') { "Origin manager: #{dead_origin_to_test} is online, adding success"}
+              successes += 1
+            else
+              $logger.warn('Pubnub') { "Origin manager: #{dead_origin_to_test} is offline"}
+              successes = 0
             end
+
+            if successes == @max_retries
+              successes = 0
+              set_origin_online(dead_origin_to_test)
+              restart_subscription
+              if @dead_origins.empty?
+                @failback_manager.cancel
+              end
+            end
+          else
+            @failback_manager.cancel
           end
 
         rescue => e
-          $logger.error "FATAL! #{e}"
+          $logger.error('Pubnub') { "#{e} #{e.backtrace}" }
         end
       end
     end
 
     def failback_manager_running?
-      @failback_manager ? true : false
+      if @failback_manager && @failback_manager.instance_variable_get(:@cancelled)
+        true
+      else
+        false
+      end
     end
 
     private
@@ -88,23 +99,13 @@ module Pubnub
     def origin_online?(origin)
       uri_to_test = URI.parse(@http + origin + '/time/0')
 
-      retries_cnt = -1
-
-      loop do
-        if retries_cnt < @max_retries
-          $logger.debug('Pubnub') { "\n\nOrigin manager: origin online? #{origin}\n\n" }
-
-          if alive_and_valid?(uri_to_test)
-            $logger.debug('Pubnub') { "Origin manager: #{origin} is online" }
-            return true
-          else
-            retries_cnt += 1
-          end
-        else
-          $logger.warn('Pubnub') { "Origin manager: #{origin} is offline"}
-          return false
-        end
+      if alive_and_valid?(uri_to_test)
+        $logger.debug('Pubnub') { "Origin manager: #{origin} is online" }
+         true
+      else
+         false
       end
+
     end
 
     def restart_subscription
@@ -115,13 +116,13 @@ module Pubnub
     def set_origin_offline(origin)
       @app.env[:origins_pool].delete_if { |o| o == origin }
       @dead_origins << origin
-      $logger.debug('Pubnub') { "Marked origin as offline.\nOnline origins:\n#{@app.env[:origins_pool].join("\n")}\nOffline origins:\n#{@dead_origins.join("\n")}" }
+      $logger.debug('Pubnub') { "Marked origin as offline.Online origins:#{@app.env[:origins_pool].join("")}Offline origins:#{@dead_origins.join("")}" }
     end
 
     def set_origin_online(origin)
       @dead_origins.delete_if { |o| o == origin }
       @app.env[:origins_pool].unshift(origin)
-      $logger.debug('Pubnub') { "Marked origin as online.\nOnline origins:\n#{@app.env[:origins_pool].join("\n")}\nOffline origins:\n#{@dead_origins.join("\n")}" }
+      $logger.debug('Pubnub') { "Marked origin as online.Online origins:#{@app.env[:origins_pool].join("")}Offline origins:#{@dead_origins.join("")}" }
     end
 
     def alive_and_valid?(uri)
