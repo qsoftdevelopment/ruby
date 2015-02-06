@@ -28,6 +28,7 @@ module Pubnub
 
           if origin_online?(current_origin)
             failures = 0
+            restart_subscription if @app.env[:subscriptions].aborted
           else
             failures += 1
           end

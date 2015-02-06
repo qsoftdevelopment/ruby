@@ -1,7 +1,7 @@
 module Pubnub
   module Event
 
-    attr_reader :fired, :finished
+    attr_reader :fired, :finished, :aborted
 
     def initialize(options, app)
       @app              = app
@@ -56,6 +56,7 @@ module Pubnub
 
     def start_event(app, count = 0)
       begin
+        @aborted = false
         if count <= app.env[:max_retries]
           $logger.debug('Pubnub'){'Event#start_event | sending request'}
           $logger.debug('Pubnub'){"Event#start_event | tt: #{@timetoken}; ctt #{app.env[:timetoken]}"}
@@ -76,6 +77,7 @@ module Pubnub
           start_event(app, count + 1)
         else
           $logger.error('Pubnub'){"Aborting #{self.class} event due to network errors and reaching max retries"}
+          @aborted = true
         end
         false
       end

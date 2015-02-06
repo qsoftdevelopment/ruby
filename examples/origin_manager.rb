@@ -99,5 +99,4 @@ puts '              Script: When You want to quit just break script hitting ctrl
 take_down(1, 40, client)
 countdown(TIMEOUT * MAX_RETRIES, 1)
 
-
 while true do end
