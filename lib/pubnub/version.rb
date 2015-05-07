@@ -1,3 +1,3 @@
 module Pubnub
-  VERSION = '3.8.0.ALPHA2'
+  VERSION = '3.7.3'
 end

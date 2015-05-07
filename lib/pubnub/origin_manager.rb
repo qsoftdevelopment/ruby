@@ -1,34 +1,38 @@
 module Pubnub
   class OriginManager
-    attr_reader :last_failback_ping_start, :last_alive_ping_start, :dead_origins
+    attr_reader :dead_origins
 
     def initialize(app)
       @app  = app
 
-      @http                    = app.env[:ssl] ? 'https://' : 'http://'
-      @ping_interval           = app.env[:origin_heartbeat_interval]
-      @timeout                 = app.env[:non_subscribe_timeout]
-      @max_retries             = app.env[:origin_heartbeat_max_retries]
+      @http                     = app.env[:ssl] ? 'https://' : 'http://'
+      @ping_interval            = app.env[:origin_heartbeat_interval]
+      @timeout                  = app.env[:non_subscribe_timeout]
+      @max_retries              = app.env[:origin_heartbeat_max_retries]
+      @online_manager           = nil
+      @failback_managers        = {}
+      @last_failback_ping_start = {}
+      @dead_origins             = []
 
-      @dead_origins  = []
+      @original_origins_pool    = app.env[:origins_pool].freeze
     end
 
-    def start_current_origin_manager
-      $logger.debug('Pubnub::OriginManager') { 'Starting ORIGIN MANAGER' }
+    def start
+      Pubnub.logger.debug('Pubnub::OriginManager') { 'Starting ORIGIN MANAGER' }
 
       failures = 0
 
       EM.add_periodic_timer(@ping_interval) do
         @last_alive_ping_start = ::Time.now
         begin
-          $logger.debug('Pubnub::OriginManager') { 'Setting current_origin' }
+          Pubnub.logger.debug('Pubnub::OriginManager') { 'Setting current_origin' }
           current_origin = @app.env[:origins_pool].first
-          $logger.debug('Pubnub::OriginManager') { "Pinging #{current_origin + '/time/0'}" }
+          Pubnub.logger.debug('Pubnub::OriginManager') { "Pinging #{current_origin + '/time/0'}" }
 
 
           if origin_online?(current_origin)
             failures = 0
-            restart_subscription if @app.env[:subscriptions].aborted
+            #restart_subscription# if @app.env[:subscriptions].aborted
           else
             failures += 1
           end
@@ -37,109 +41,101 @@ module Pubnub
             failures = 0
             set_origin_offline(current_origin)
             restart_subscription
-            start_failback_manager unless failback_manager_running?
+            start_failback_manager(current_origin)# unless failback_manager_running?
           end
 
         rescue => e
-          $logger.error('Pubnub::OriginManager') { "#{e} #{e.backtrace}" }
+          Pubnub.logger.error('Pubnub::OriginManager') { "#{e} #{e.backtrace}" }
         end unless @app.env[:origins_pool].empty?
       end
     end
 
-    def start_failback_manager
-      $logger.debug('Pubnub::OriginManager') { 'Starting FAILBACK ORIGIN MANAGER' }
+    def start_failback_manager(dead_origin)
+      Pubnub.logger.debug('Pubnub::OriginManager') { 'Starting FAILBACK ORIGIN MANAGER' }
 
       successes = 0
-      @failback_manager = EM.add_periodic_timer(@app.env[:origin_heartbeat_interval]) do
-        @last_failback_ping_start = ::Time.now
+      @failback_managers[dead_origin] = EM.add_periodic_timer(@ping_interval) do
+        @last_failback_ping_start[dead_origin] = ::Time.now
         begin
-          dead_origin_to_test = @dead_origins.last
+          dead_origin_to_test = dead_origin
 
-          if dead_origin_to_test != nil # Timer could fire again before cancelled
+          # if dead_origin_to_test != nil # Timer could fire again before cancelled
 
-            $logger.debug('Pubnub::OriginManager') { "Pinging dead origin #{dead_origin_to_test + '/time/0'}" }
+            Pubnub.logger.debug('Pubnub::OriginManager') { "Pinging dead origin #{dead_origin_to_test + '/time/0'}" }
             uri_to_test = URI.parse(@http + dead_origin_to_test + '/time/0')
 
-            $logger.debug('Pubnub::OriginManager') { "Origin manager: failback manager #{dead_origin_to_test}" }
+            Pubnub.logger.debug('Pubnub::OriginManager') { "Origin manager: failback manager #{dead_origin_to_test}" }
 
             if alive_and_valid?(uri_to_test)
-              $logger.warn('Pubnub::OriginManager') { "Origin manager: #{dead_origin_to_test} is online, adding success"}
+              Pubnub.logger.warn('Pubnub::OriginManager') { "Origin manager: #{dead_origin_to_test} is online, adding success"}
               successes += 1
             else
-              $logger.warn('Pubnub::OriginManager') { "Origin manager: #{dead_origin_to_test} is offline"}
+              Pubnub.logger.warn('Pubnub::OriginManager') { "Origin manager: #{dead_origin_to_test} is offline"}
               successes = 0
             end
 
             if successes == @max_retries
-              $logger.debug('Pubnub::OriginManager') { "Origin comes back to us! #{dead_origin_to_test}" }
+              Pubnub.logger.debug('Pubnub::OriginManager') { "Origin comes back to us! #{dead_origin_to_test}" }
               successes = 0
               set_origin_online(dead_origin_to_test)
               restart_subscription
-              if @dead_origins.empty?
-                $logger.debug('Pubnub::OriginManager') { 'Cancelling FailbackManagera' }
-                @failback_manager.cancel
-                until @failback_manager.instance_variable_get(:@cancelled) do end
-              end
+              @failback_managers[dead_origin].cancel
+              until @failback_managers[dead_origin].instance_variable_get(:@cancelled) do end
+              @failback_managers[dead_origin] = nil
+              Pubnub.logger.debug('Pubnub::OriginManager') { "Canceled FailbackManager for #{dead_origin}" }
             end
-          else
-            restart_subscription
-            $logger.debug('Pubnub::OriginManager') { 'Cancelling FailbackManagerb' }
-            @failback_manager.cancel
-            until @failback_manager.instance_variable_get(:@cancelled) do end
-          end
+          # else
+          #   restart_subscription
+          #   Pubnub.logger.debug('Pubnub::OriginManager') { 'Cancelling FailbackManagerb' }
+          #   @failback_manager.cancel
+          #   until @failback_manager.instance_variable_get(:@cancelled) do end
+          # end
 
         rescue => e
-          $logger.error('Pubnub::OriginManager') { "#{e} #{e.backtrace}" }
+          Pubnub.logger.error('Pubnub::OriginManager') { "#{e} #{e.backtrace}" }
         end
-      end
-    end
-
-    def failback_manager_running?
-      if @failback_manager && !@failback_manager.instance_variable_get(:@cancelled)
-        true
-      else
-        false
       end
     end
 
     private
 
     def origin_online?(origin)
-      $logger.debug('Pubnub::OriginManager') { 'origin_online?' }
+      Pubnub.logger.debug('Pubnub::OriginManager') { 'origin_online?' }
       uri_to_test = URI.parse(@http + origin + '/time/0')
-      $logger.debug('Pubnub::OriginManager') { "origin_online? #{uri_to_test}" }
+      Pubnub.logger.debug('Pubnub::OriginManager') { "origin_online? #{uri_to_test}" }
 
       if alive_and_valid?(uri_to_test)
-        $logger.debug('Pubnub::OriginManager') { "Origin manager: #{origin} is online" }
+        Pubnub.logger.debug('Pubnub::OriginManager') { "Origin manager: #{origin} is online" }
          true
       else
-        $logger.debug('Pubnub::OriginManager') { "Origin manager: #{origin} is offline" }
+        Pubnub.logger.debug('Pubnub::OriginManager') { "Origin manager: #{origin} is offline" }
         false
       end
 
     end
 
     def restart_subscription
-      $logger.debug('Pubnub::OriginManager') { 'Restarting subscription' }
+      Pubnub.logger.debug('Pubnub::OriginManager') { 'Restarting subscription' }
       @app.start_subscribe(true)
     end
 
     def set_origin_offline(origin)
-      $logger.warn('Pubnub::OriginManager') { "Setting origin offline #{origin}" }
+      Pubnub.logger.warn('Pubnub::OriginManager') { "Setting origin offline #{origin}" }
       @app.env[:origins_pool].delete_if { |o| o == origin }
       @dead_origins << origin
-      $logger.debug('Pubnub::OriginManager') { "Marked origin as offline.Online origins:#{@app.env[:origins_pool].join("")}Offline origins:#{@dead_origins.join("")}" }
+      Pubnub.logger.debug('Pubnub::OriginManager') { "Marked origin as offline. Online origins:#{@app.env[:origins_pool].join(" ")}Offline origins:#{@dead_origins.join(" ")}" }
     end
 
     def set_origin_online(origin)
-      $logger.warn('Pubnub::OriginManager') { "Setting origin online #{origin}" }
+      Pubnub.logger.warn('Pubnub::OriginManager') { "Setting origin online #{origin}" }
       @dead_origins.delete_if { |o| o == origin }
       @app.env[:origins_pool].unshift(origin)
-      $logger.debug('Pubnub::OriginManager') { "Marked origin as online.Online origins:#{@app.env[:origins_pool].join("")}Offline origins:#{@dead_origins.join("")}" }
+      @app.env[:origins_pool].sort_by! { |o| @original_origins_pool.index(o) }
+      Pubnub.logger.debug('Pubnub::OriginManager') { "Marked origin as online. Online origins:#{@app.env[:origins_pool].join(" ")}Offline origins:#{@dead_origins.join(" ")}" }
     end
 
     def alive_and_valid?(uri)
-      $logger.debug('Pubnub::OriginManager') { "Checking alive_and_valid #{uri}" }
+      Pubnub.logger.debug('Pubnub::OriginManager') { "Checking alive_and_valid #{uri}" }
       begin
         response = Net::HTTP.start(uri.host, uri.port) do |http|
           request = Net::HTTP::Get.new uri
@@ -151,7 +147,7 @@ module Pubnub
       rescue Errno::ECONNREFUSED
         false
       rescue => e
-        $logger.error('Pubnub::OriginManager'){ "#{e.inspect} #{e.backtrace}" }
+        Pubnub.logger.error('Pubnub::OriginManager'){ "#{e.inspect} #{e.backtrace}" }
         false
       end
     end

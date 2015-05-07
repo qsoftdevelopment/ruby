@@ -45,6 +45,7 @@ class DemoConsole
       :C    => :show_state,
       :D    => :set_state,
       :E    => :get_online_origins,
+      :P    => :pry,
       :EXIT => :exit
   }
 
@@ -194,6 +195,7 @@ class DemoConsole
         puts 'C. Check state'
         puts 'D. Set state'
         puts 'E. Check online origins'
+        puts 'P. Start pry'
         print "\nYour choice: ".red
         choice = gets.chomp!.to_s.upcase.to_sym
       end
@@ -268,6 +270,8 @@ class DemoConsole
         end
       when :get_online_origins
         puts @pubnub.env[:origins_pool]
+      when :pry
+        binding.pry
       end
       choice = nil
     end

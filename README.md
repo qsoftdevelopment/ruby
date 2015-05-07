@@ -1,6 +1,6 @@
 # Please direct all Support Questions and Concerns to Support@PubNub.com
 
-## PubNub Gem version 3.7.0
+## PubNub Gem version 3.7.1
 
 ##### YOU MUST HAVE A PUBNUB ACCOUNT TO USE THE API.
 ##### http://www.pubnub.com/account
@@ -17,10 +17,10 @@ We've made the response format compatible across all operations. This may break 
 Examples of affected operations can be found [here](3.5_to_3.6_upgrade_notes.md).
 
 ### Upgrading from PubNub 3.3.x and Earlier
-PubNub 3.7.0 is NOT compatible with earlier than 3.4 versions of Pubnub Ruby Client.
+PubNub 3.7.1 is NOT compatible with earlier than 3.4 versions of Pubnub Ruby Client.
 
 ### Upgrading from PubNub 3.4 and higher versions
-PubNub 3.7.0 is compatible with 3.4 version.
+PubNub 3.7.1 is compatible with 3.4 version.
 
 ## Important Notice about Blocking vs Non-Blocking Calls
 
@@ -330,13 +330,6 @@ All channel groups specific operations can be issued with
 `#channel_registration` method.
 
 #### Getting info
-
-##### Getting all namespaces
-
-```ruby
-# Response envelope will hold info as hash in payload attribute. 
-pubnub.channel_registration(action: :list_namespaces, http_sync: true)
-```
 
 ##### Getting all non-namespaced channel groups
 

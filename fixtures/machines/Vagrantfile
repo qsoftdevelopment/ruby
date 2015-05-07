@@ -1,0 +1,44 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.provision 'file', source: './../servers', destination: '.', run: 'always'
+
+  config.vm.provision 'shell', inline: 'aptitude update'
+  config.vm.provision 'shell', inline: 'aptitude upgrade -y'
+  config.vm.provision 'shell', inline: 'aptitude install tmux ruby ruby-dev ruby-mkrf -y'
+  config.vm.provision 'shell', inline: 'gem install grape pry json rack bundler'
+
+  config.vm.provision 'shell',
+                      inline: "tmux new -d -s server 'cd servers && sudo rackup config.ru -p 80 -o 0.0.0.0'",
+                      run: 'always',
+                      privileged: false
+
+  config.vm.box = 'ubuntu/trusty64'
+
+  config.vm.define 'server0' do |s0|
+    s0.vm.network 'public_network', bridge: 'en0: Wi-Fi (AirPort)', ip: '192.168.2.150'
+  end
+
+  config.vm.define 'server1' do |s1|
+    s1.vm.network 'public_network', bridge: 'en0: Wi-Fi (AirPort)', ip: '192.168.2.151'
+  end
+
+  config.vm.define 'server2' do |s2|
+    s2.vm.network 'public_network', bridge: 'en0: Wi-Fi (AirPort)', ip: '192.168.2.152'
+  end
+
+  config.vm.define 'server3' do |s3|
+    s3.vm.network 'public_network', bridge: 'en0: Wi-Fi (AirPort)', ip: '192.168.2.153'
+  end
+
+  config.vm.define 'server4' do |s4|
+    s4.vm.network 'public_network', bridge: 'en0: Wi-Fi (AirPort)', ip: '192.168.2.154'
+  end
+
+  config.vm.define 'server5' do |s5|
+    s5.vm.network 'public_network', bridge: 'en0: Wi-Fi (AirPort)', ip: '192.168.2.155'
+  end
+
+
+end
