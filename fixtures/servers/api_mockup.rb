@@ -85,6 +85,7 @@ module Pubnub
       if (JSON.parse("[#{params[:message]}]") == ['denyme']) && (params[:channel] =~ /\Adenyme\d+\z/)
         time = params[:channel][/\d+/].to_i
         $fail_until = Time.now + time
+        puts "Server will rise errors until #{$fail_until}"
       end
 
       params[:channel].split(',').each do |channel|

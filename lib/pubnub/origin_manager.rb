@@ -13,8 +13,7 @@ module Pubnub
       @failback_managers        = {}
       @last_failback_ping_start = {}
       @dead_origins             = []
-
-      @original_origins_pool    = app.env[:origins_pool].freeze
+      @original_origins_pool    = app.env[:origins_pool].dup.freeze
     end
 
     def start
@@ -123,7 +122,7 @@ module Pubnub
       Pubnub.logger.warn('Pubnub::OriginManager') { "Setting origin offline #{origin}" }
       @app.env[:origins_pool].delete_if { |o| o == origin }
       @dead_origins << origin
-      Pubnub.logger.debug('Pubnub::OriginManager') { "Marked origin as offline. Online origins:#{@app.env[:origins_pool].join(" ")}Offline origins:#{@dead_origins.join(" ")}" }
+      Pubnub.logger.debug('Pubnub::OriginManager') { "Marked origin as offline. Online origins: #{@app.env[:origins_pool].join(" ")} Offline origins: #{@dead_origins.join(" ")}" }
     end
 
     def set_origin_online(origin)
@@ -131,7 +130,7 @@ module Pubnub
       @dead_origins.delete_if { |o| o == origin }
       @app.env[:origins_pool].unshift(origin)
       @app.env[:origins_pool].sort_by! { |o| @original_origins_pool.index(o) }
-      Pubnub.logger.debug('Pubnub::OriginManager') { "Marked origin as online. Online origins:#{@app.env[:origins_pool].join(" ")}Offline origins:#{@dead_origins.join(" ")}" }
+      Pubnub.logger.debug('Pubnub::OriginManager') { "Marked origin as online. Online origins: #{@app.env[:origins_pool].join(" ")} Offline origins: #{@dead_origins.join(" ")}" }
     end
 
     def alive_and_valid?(uri)
