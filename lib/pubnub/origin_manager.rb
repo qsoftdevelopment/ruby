@@ -30,9 +30,10 @@ module Pubnub
 
 
           if origin_online?(current_origin)
+            @app.start_async if @app.async_halted?
             failures = 0
-            #restart_subscription# if @app.env[:subscriptions].aborted
           else
+            @app.halt_async unless @app.async_halted?
             failures += 1
           end
 
@@ -40,7 +41,8 @@ module Pubnub
             failures = 0
             set_origin_offline(current_origin)
             restart_subscription
-            start_failback_manager(current_origin)# unless failback_manager_running?
+            @app.start_async if @app.async_halted?
+            start_failback_manager(current_origin)
           end
 
         rescue => e

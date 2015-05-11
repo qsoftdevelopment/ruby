@@ -253,12 +253,14 @@ module Pubnub
         Pubnub.logger.debug('Pubnub'){'Pubnub::Client#start_railgun | Initializing railgun'}
         @env[:railgun] = EM.add_periodic_timer(0.01) do
           begin
-            @async_events.each do |event|
-              EM.defer do
-                event.fire(self) unless event.fired?
+            unless async_halted?
+              @async_events.each do |event|
+                EM.defer do
+                  event.fire(self) unless event.fired?
+                end
               end
+              @async_events.delete_if {|event| event.finished? }
             end
-            @async_events.delete_if {|event| event.finished? }
           rescue => e
             Pubnub.logger.error(:pubnub){e}
           end
@@ -273,6 +275,20 @@ module Pubnub
     def start_origin_manager
       @origin_manager = OriginManager.new(self)
       @origin_manager.start
+    end
+
+    def async_halted?
+      @async_halted ? true : false
+    end
+
+    def halt_async
+      Pubnub.logger.debug(:pubnub){'Pubnub::Client#halt_async | Stopping async events execution'}
+      @async_halted = true
+    end
+
+    def start_async
+      Pubnub.logger.debug(:pubnub){'Pubnub::Client#start_async | Restoring async events execution'}
+      @async_halted = false
     end
 
     private

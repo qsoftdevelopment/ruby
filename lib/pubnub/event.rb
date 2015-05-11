@@ -36,8 +36,6 @@ module Pubnub
 
     def fire(app)
       Pubnub.logger.debug(:pubnub){'Pubnub::Event#fire'}
-      @fired = true
-      Pubnub.logger.debug(:pubnub){'Event#fire'}
       setup_connection(app) unless connection_exist?(app)
       envelopes = start_event(app)
     end
@@ -250,13 +248,16 @@ module Pubnub
       Pubnub.logger.debug(:pubnub){'Pubnub::SingleEvent#fire'}
       if @http_sync
         Pubnub.logger.debug(:pubnub){'Pubnub::SingleEvent#fire | Sync event!'}
+        @fired = true
         super(app)
       elsif app.async_events.include? self
         Pubnub.logger.debug(:pubnub){'Pubnub::SingleEvent#fire | Event already on list!'}
+        @fired = true
         super(app)
       else
         Pubnub.logger.debug(:pubnub){'Pubnub::SingleEvent#fire | Adding event to async_events'}
         app.async_events << self
+        Pubnub.logger.warn(:pubnub){'Pubnub::SingleEvent#fire | Single events are temporary halted'} if app.async_halted?
         Pubnub.logger.debug(:pubnub){'Pubnub::SingleEvent#fire | Starting railgun'}
         app.start_railgun
       end
@@ -295,6 +296,7 @@ module Pubnub
     def fire(app)
       begin
         Pubnub.logger.debug(:pubnub){'SubscribeEvent#fire'}
+        @fired = true
         if @http_sync
           Pubnub.logger.debug(:pubnub){'SubscribeEvent#fire sync'}
           if self.class == Pubnub::Subscribe && app.env[:heartbeat]
