@@ -253,7 +253,7 @@ module Pubnub
         Pubnub.logger.debug('Pubnub'){'Pubnub::Client#start_railgun | Initializing railgun'}
         @env[:railgun] = EM.add_periodic_timer(0.01) do
           begin
-            unless async_halted?
+            if !async_halted? || !@env[:queue_on_origin_change]
               @async_events.each do |event|
                 EM.defer do
                   event.fire(self) unless event.fired?

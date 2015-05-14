@@ -257,7 +257,7 @@ module Pubnub
       else
         Pubnub.logger.debug(:pubnub){'Pubnub::SingleEvent#fire | Adding event to async_events'}
         app.async_events << self
-        Pubnub.logger.warn(:pubnub){'Pubnub::SingleEvent#fire | Single events are temporary halted'} if app.async_halted?
+        Pubnub.logger.warn(:pubnub){'Pubnub::SingleEvent#fire | Single events are temporary halted'} if app.async_halted? && @env[:queue_on_origin_change]
         Pubnub.logger.debug(:pubnub){'Pubnub::SingleEvent#fire | Starting railgun'}
         app.start_railgun
       end
