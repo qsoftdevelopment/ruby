@@ -2,7 +2,7 @@
 module Pubnub
   # Holds SetState functionality
   class SetState < SingleEvent
-    include Celluloid
+    include Concurrent
     include Pubnub::Validator::SetState
 
     def initialize(options, app)

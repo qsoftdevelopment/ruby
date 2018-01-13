@@ -2,7 +2,7 @@
 module Pubnub
   # Holds leave functionality
   class Leave < SingleEvent
-    include Celluloid
+    include Concurrent
     include Pubnub::Validator::Leave
 
     def initialize(options, app)

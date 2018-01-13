@@ -1,3 +1,6 @@
+##### 4.0.28
+* Added Concurrent-Ruby gem
+
 ##### 4.0.25
 * Added Telemetry
 

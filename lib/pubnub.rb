@@ -12,6 +12,7 @@ require 'httpclient'
 require 'logger'
 require 'dry-validation'
 require 'cgi'
+require 'concurrent'
 
 require 'pubnub/version'
 require 'pubnub/client'

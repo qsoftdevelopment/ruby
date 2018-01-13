@@ -2,7 +2,7 @@
 module Pubnub
   # Holds revoke functionality
   class Revoke < PAM
-    include Celluloid
+    include Concurrent
     include Pubnub::Validator::Revoke
 
     def initialize(options, app)

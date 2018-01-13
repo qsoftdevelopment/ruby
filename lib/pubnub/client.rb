@@ -350,7 +350,8 @@ module Pubnub
 
     def setup_app(options)
       Pubnub.logger = options[:logger] || Logger.new('pubnub.log')
-      Celluloid.logger = Pubnub.logger
+      # Celluloid.logger = Pubnub.logger
+      Concurrent.global_logger = Pubnub.logger
       @subscriber = Subscriber.new(self)
       @env = options
     end
